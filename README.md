@@ -2,8 +2,7 @@
 	    <head>
 			<meta charsets="utf-6">
 			<b>Fix It or Let It Fall</b>
-			</head>
-				    <div>
+	    </head>
 							<p>...</p>
 				      <p> This is a game.<p/>
 							<p>A game about the <em>Roman Republic.</em></p>
