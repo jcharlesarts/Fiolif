@@ -1,1 +1,861 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <title>Rome: Expanded Chaos Edition</title>
+  <style>
+    /* BASIC PIXEL/RETRO UI STYLES */
+    html, body {
+      margin: 0;
+      padding: 0;
+      background: #000;
+      color: #fff;
+      font-family: "Press Start 2P", monospace;
+      overflow-x: hidden;
+    }
 
+    #app {
+      max-width: 1000px;
+      margin: 0 auto;
+      padding: 1rem;
+      text-align: center;
+    }
+
+    .hidden { display: none; }
+
+    button {
+      font-family: inherit;
+      font-size: 14px;
+      background: #222;
+      color: #fff;
+      border: 2px solid #ccc;
+      padding: 0.5rem 1rem;
+      margin: 0.5rem;
+      cursor: pointer;
+    }
+    button:hover {
+      background: #333;
+    }
+
+    .panel {
+      border: 4px double #fff;
+      padding: 1rem;
+      background: #1e1e1e;
+      margin: 1rem 0;
+    }
+
+    /* STAR WARS SCROLL (SLOW) */
+    #intro-screen {
+      height: 60vh;
+      overflow: hidden;
+      perspective: 300px;
+      margin-bottom: 1rem;
+      background: #111;
+      border: 4px double #fff;
+      position: relative;
+    }
+    #scroll-text {
+      position: absolute;
+      width: 100%;
+      transform-origin: 50% 100%;
+      animation: slowCrawl 40s linear forwards;
+      font-size: 1rem;
+      line-height: 1.6;
+      text-align: center;
+      padding: 0 2rem;
+    }
+    @keyframes slowCrawl {
+      0%   { transform: rotateX(25deg) translateY(100%); }
+      100% { transform: rotateX(25deg) translateY(-600%); }
+    }
+
+    /* START MENU */
+    #start-menu {
+      border: 4px double #fff;
+      padding: 1rem;
+      background: #1e1e1e;
+    }
+
+    #name-input {
+      margin: 0.5rem 0;
+      font-family: inherit;
+      font-size: 14px;
+      width: 200px;
+      text-align: center;
+    }
+
+    /* GAME SCREEN, SCOREBOARD */
+    #game-screen {
+      margin: 1rem auto;
+    }
+    #scoreboard {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-around;
+      border: 4px double #fff;
+      margin-bottom: 1rem;
+      padding: 0.5rem;
+      background: #2b2b2b;
+    }
+    .score-item {
+      margin: 0.5rem 1rem;
+    }
+
+    /* PROBLEM AREA, MESSAGE LOG */
+    #problem-area {
+      border: 2px dashed #fff;
+      min-height: 200px;
+      padding: 1rem;
+      margin-bottom: 1rem;
+      text-align: left;
+    }
+    .problem-title {
+      margin: 0.5rem 0;
+      font-size: 1.1rem;
+    }
+    .problem-desc {
+      color: #ccc;
+      margin-bottom: 0.5rem;
+      font-size: 0.9rem;
+    }
+
+    #message-log {
+      border: 2px dashed #fff;
+      background: #3b3b3b;
+      padding: 0.5rem;
+      min-height: 60px;
+      max-height: 150px;
+      overflow-y: auto;
+      font-size: 1.1rem;
+      text-align: center;
+      margin-bottom: 2rem;
+    }
+    .log-entry { margin: 0.2rem 0; }
+    .log-info { color: #6ce3e8; }
+    .log-negative { color: #f86; }
+    .log-positive { color: #9fe86c; }
+
+    /* ROUND SUMMARY */
+    #round-summary {
+      border: 4px double #fff;
+      background: #272727;
+      margin: 1rem 0;
+      padding: 1rem;
+      min-height: 180px;
+    }
+    #round-summary h2 { margin-top: 0; }
+
+    /* GAME OVER */
+    #game-over-screen {
+      border: 4px double #fff;
+      padding: 1rem;
+      background: #1e1e1e;
+      margin: 1rem 0;
+    }
+  </style>
+</head>
+<body>
+<div id="app">
+
+  <!-- INTRO SCREEN (Star Wars scroll) -->
+  <div id="intro-screen">
+    <div id="scroll-text">
+      <h2>A TIME OF TURMOIL...</h2>
+      <p>
+        Rome’s Republic stands on the brink. Senators bicker, armies threaten mutiny,<br/>
+        and the people grow restless, demanding bread and spectacles.<br/><br/>
+        You, a rising Senator, must lead the city through crises large and small.<br/>
+        Will you fix the Republic—or watch it crumble?<br/><br/>
+        <em>“It is not these well-fed long-haired men that I fear, but the pale and the hungry-looking.”<br/>
+        – Julius Caesar</em>
+      </p>
+    </div>
+  </div>
+
+  <!-- START MENU -->
+  <div id="start-menu" class="panel hidden">
+    <h1>Rome: Expanded Chaos Edition</h1>
+    <p><em>The Senate awaits your leadership... or your downfall.</em></p>
+    <label for="name-input">Enter Your Name:</label><br/>
+    <input type="text" id="name-input" placeholder="e.g. Maria, John..." /><br/>
+
+    <h3>Choose Difficulty:</h3>
+    <button class="difficulty-btn" data-diff="easy">Easy</button>
+    <button class="difficulty-btn" data-diff="normal">Normal</button>
+    <button class="difficulty-btn" data-diff="hard">Hard</button>
+
+    <p id="chosen-diff"><em>No difficulty selected</em></p>
+    <button id="btn-start" disabled>BEGIN</button>
+  </div>
+
+  <!-- GAME SCREEN -->
+  <div id="game-screen" class="panel hidden">
+    <div id="scoreboard">
+      <div class="score-item">Year: <span id="year-display">509</span> BCE</div>
+      <div class="score-item">Senator: <span id="senator-name-display"></span></div>
+      <div class="score-item">Round: <span id="round-num">1</span>/12</div>
+      <div class="score-item">Treasury: <span id="treasury-display"></span> denarii</div>
+      <div class="score-item">Riot Tokens: <span id="riot-display">0</span></div>
+      <!-- City status displayed -->
+      <div class="score-item">Unrest: <span id="unrest-display">0</span></div>
+      <div class="score-item">Infra: <span id="infra-display">0</span></div>
+      <div class="score-item">Politics: <span id="politics-display">0</span></div>
+    </div>
+
+    <div id="problem-area"></div>
+    <div id="message-log"></div>
+  </div>
+
+  <!-- ROUND SUMMARY -->
+  <div id="round-summary" class="hidden">
+    <h2>End of Round <span id="summary-round"></span></h2>
+    <p id="round-summary-text"></p>
+    <button id="btn-next-round">Continue</button>
+  </div>
+
+  <!-- GAME OVER -->
+  <div id="game-over-screen" class="hidden">
+    <h2>GAME OVER</h2>
+    <p id="game-over-text"></p>
+    <button id="btn-restart">Restart</button>
+  </div>
+
+</div>
+
+<script>
+/* ==========================================
+   INTRO SCROLL -> SHOW MENU
+========================================== */
+const introScreen = document.getElementById("intro-screen");
+const scrollText = document.getElementById("scroll-text");
+const startMenu = document.getElementById("start-menu");
+
+scrollText.addEventListener("animationend", () => {
+  introScreen.classList.add("hidden");
+  startMenu.classList.remove("hidden");
+});
+introScreen.addEventListener("click", () => {
+  introScreen.classList.add("hidden");
+  startMenu.classList.remove("hidden");
+});
+
+/* ==========================================
+   DIFFICULTY & NAME SETUP
+========================================== */
+const difficultyMap = {
+  easy: 12000,
+  normal: 7530,
+  hard: 4200
+};
+
+let chosenDifficulty = null;
+const chosenDiffP = document.getElementById("chosen-diff");
+const btnStart = document.getElementById("btn-start");
+const nameInput = document.getElementById("name-input");
+
+document.querySelectorAll(".difficulty-btn").forEach(btn => {
+  btn.addEventListener("click", () => {
+    chosenDifficulty = btn.dataset.diff;
+    chosenDiffP.textContent = `Chosen difficulty: ${chosenDifficulty.toUpperCase()} (${difficultyMap[chosenDifficulty]} denarii)`;
+    checkStartButton();
+  });
+});
+nameInput.addEventListener("input", checkStartButton);
+
+function checkStartButton() {
+  const nameVal = nameInput.value.trim();
+  if (chosenDifficulty && nameVal.length > 0) {
+    btnStart.disabled = false;
+  } else {
+    btnStart.disabled = true;
+  }
+}
+
+/* ==========================================
+   GAME VARIABLES
+========================================== */
+const totalRounds = 12;
+let currentRound = 1;
+let problemsDoneThisRound = 0;
+let senatorName = "";
+let treasury = 0;
+let riotTokens = 0;
+let year = 509;
+let gameOver = false;
+
+// City status
+let unrest = 0;
+let infrastructure = 0;
+let politics = 0;
+
+// Each problem => 13 years pass
+const YEARS_PER_PROBLEM = 13;
+
+const gameScreen = document.getElementById("game-screen");
+const roundNumEl = document.getElementById("round-num");
+const problemArea = document.getElementById("problem-area");
+const messageLog = document.getElementById("message-log");
+
+const yearDisplay = document.getElementById("year-display");
+const senatorNameDisplay = document.getElementById("senator-name-display");
+const treasuryDisplay = document.getElementById("treasury-display");
+const riotDisplay = document.getElementById("riot-display");
+const unrestDisplay = document.getElementById("unrest-display");
+const infraDisplay = document.getElementById("infra-display");
+const politicsDisplay = document.getElementById("politics-display");
+
+const roundSummary = document.getElementById("round-summary");
+const summaryRound = document.getElementById("summary-round");
+const roundSummaryText = document.getElementById("round-summary-text");
+const btnNextRound = document.getElementById("btn-next-round");
+
+const gameOverScreen = document.getElementById("game-over-screen");
+const gameOverText = document.getElementById("game-over-text");
+const btnRestart = document.getElementById("btn-restart");
+btnRestart.addEventListener("click", () => location.reload());
+
+btnStart.addEventListener("click", startGame);
+
+function startGame() {
+  startMenu.classList.add("hidden");
+  gameScreen.classList.remove("hidden");
+
+  senatorName = makeRomanName(nameInput.value.trim());
+  treasury = difficultyMap[chosenDifficulty];
+  riotTokens = 0;
+  year = 509;
+  currentRound = 1;
+  unrest = 0;
+  infrastructure = 0;
+  politics = 0;
+  gameOver = false;
+
+  senatorNameDisplay.textContent = senatorName;
+  updateScoreboard();
+  runRound();
+}
+
+/* Generate Roman suffix name */
+const romanSuffixes = ["onius", "alia", "icus", "illa", "ius", "aeus", "ara"];
+function makeRomanName(base) {
+  const suffix = romanSuffixes[Math.floor(Math.random()*romanSuffixes.length)];
+  const cap = base.charAt(0).toUpperCase() + base.slice(1);
+  return cap + suffix;
+}
+
+/* ==========================================
+   PROBLEMS POOL (with rarity)
+========================================== */
+
+/* 
+   We'll do a giant array with { title, desc, rarity, options: [ ... ] }.
+   rarity can be 'common', 'uncommon', or 'extreme'.
+   We'll pick from these categories with weighted chances or just combine them all.
+*/
+const problemsPool = [
+  /* ---------- COMMON problems ---------- */
+  {
+    title: "Small Market Fire",
+    desc: "A fire damages stalls in the forum. Minor but irritating.",
+    rarity: "common",
+    options: [
+      {label: "Fund Repairs (Cost 200)", cost: 200, riot: 0, unrest: 0, infra: +1, pol: 0, msg: "Vendors thankful, commerce resumes."},
+      {label: "Ignore (0)", cost: 0, riot: 1, unrest: +1, infra: -1, pol: 0, msg: "Smoldering ruins breed discontent."}
+    ]
+  },
+  {
+    title: "Leaky Aqueduct",
+    desc: "Fresh water seeps away. Thirsty citizens can become unruly.",
+    rarity: "common",
+    options: [
+      {label: "Fix Properly (600)", cost: 600, riot: 0, unrest: -1, infra: +1, pol: 0, msg: "Secure water source."},
+      {label: "Patch (300)", cost: 300, riot: 0, unrest: 0, infra: 0, pol: 0, msg: "Might fail again soon."},
+      {label: "Ignore (0)", cost: 0, riot: 1, unrest: +1, infra: -1, pol: 0, msg: "Water shortage anger."}
+    ]
+  },
+  {
+    title: "Road Collapse",
+    desc: "Merchants can’t deliver goods, trade suffers.",
+    rarity: "common",
+    options: [
+      {label: "Stone Rebuild (500)", cost: 500, riot: 0, unrest: -1, infra: +1, pol: 0, msg: "Trade restored."},
+      {label: "Wooden Planks (250)", cost: 250, riot: 0, unrest: 0, infra: 0, pol: 0, msg: "Cheaper fix."},
+      {label: "Ignore (0)", cost: 0, riot: 1, unrest: +1, infra: -1, pol: 0, msg: "Merchants furious."}
+    ]
+  },
+  {
+    title: "Temple Repairs",
+    desc: "Priests demand repairs or risk divine wrath.",
+    rarity: "common",
+    options: [
+      {label: "Full Renovation (700)", cost: 700, riot: 0, unrest: -1, infra: 0, pol: +1, msg: "Priests pleased, you gain favor."},
+      {label: "Minimal Fix (300)", cost: 300, riot: 0, unrest: 0, infra: 0, pol: 0, msg: "Temple stands, priests grumble."},
+      {label: "Ignore (0)", cost: 0, riot: 1, unrest: +1, infra: 0, pol: -1, msg: "Priests outraged."}
+    ]
+  },
+  {
+    title: "Gladiator Games Funding",
+    desc: "People want more games to distract them from politics.",
+    rarity: "common",
+    options: [
+      {label: "Huge Festival (800)", cost: 800, riot: 0, unrest: -1, infra: 0, pol: +1, msg: "Crowds love it."},
+      {label: "Small Event (400)", cost: 400, riot: 0, unrest: 0, infra: 0, pol: 0, msg: "Enough for now."},
+      {label: "No Games (0)", cost: 0, riot: 1, unrest: +1, infra: 0, pol: -1, msg: "People get restless."}
+    ]
+  },
+  /* ---------- UNCOMMON problems ---------- */
+  {
+    title: "Dock Fire",
+    desc: "A fire destroyed a shipping dock. Sea trade halts.",
+    rarity: "uncommon",
+    options: [
+      {label: "Rebuild (500)", cost: 500, riot: 0, unrest: -1, infra: +1, pol: 0, msg: "Dock restored."},
+      {label: "Cheap Patch (250)", cost: 250, riot: 0, unrest: 0, infra: 0, pol: 0, msg: "May fail again."},
+      {label: "Ignore (0)", cost: 0, riot: 1, unrest: +1, infra: -1, pol: 0, msg: "Fishermen riot."}
+    ]
+  },
+  {
+    title: "Senatorial Favor",
+    desc: "A colleague wants prime seats at the games for personal gain.",
+    rarity: "uncommon",
+    options: [
+      {label: "Give Seats (100)", cost: 100, riot: 0, unrest: 0, infra: 0, pol: +1, msg: "He owes you a favor."},
+      {label: "Charge Him (-100)", cost: -100, riot: 0, unrest: 0, infra: 0, pol: -1, msg: "You profit, but he's miffed."},
+      {label: "Refuse (0)", cost: 0, riot: 0, unrest: 0, infra: 0, pol: 0, msg: "No alliance formed."}
+    ]
+  },
+  {
+    title: "Wine Bribe",
+    desc: "A merchant offers vintage wine if you lower his taxes.",
+    rarity: "uncommon",
+    options: [
+      {label: "Reduce Taxes (300)", cost: 300, riot: 0, unrest: +1, infra: 0, pol: -1, msg: "Lose revenue, gain wine scandal."},
+      {label: "Demand Bigger Bribe (-150)", cost: -150, riot: 0, unrest: 0, infra: 0, pol: -1, msg: "You earn 150, but rumors swirl."},
+      {label: "Decline (0)", cost: 0, riot: 0, unrest: 0, infra: 0, pol: 0, msg: "No scandal, no wine."}
+    ]
+  },
+  {
+    title: "Latin Allies Demand Rights",
+    desc: "Allied towns want representation or revolt.",
+    rarity: "uncommon",
+    options: [
+      {label: "Grant Citizenship (700)", cost: 700, riot: 0, unrest: -1, infra: 0, pol: +1, msg: "Long-term stability."},
+      {label: "Offer Trade (350)", cost: 350, riot: 0, unrest: 0, infra: 0, pol: 0, msg: "Pacifies them short-term."},
+      {label: "Reject (0)", cost: 0, riot: 1, unrest: +1, infra: 0, pol: -1, msg: "Risk of rebellion."}
+    ]
+  },
+  {
+    title: "Corrupt Governor in Sicily",
+    desc: "Accused of extorting locals, hurting tax revenue.",
+    rarity: "uncommon",
+    options: [
+      {label: "Replace (600)", cost: 600, riot: 0, unrest: -1, infra: 0, pol: 0, msg: "Order restored."},
+      {label: "Fine (300)", cost: 300, riot: 0, unrest: 0, infra: 0, pol: 0, msg: "He may keep skimming."},
+      {label: "Ignore (0)", cost: 0, riot: 1, unrest: +1, infra: 0, pol: -1, msg: "Locals revolt."}
+    ]
+  },
+  {
+    title: "Legion Pay",
+    desc: "Frontier legions threaten mutiny if not paid.",
+    rarity: "uncommon",
+    options: [
+      {label: "Full Pay (900)", cost: 900, riot: 0, unrest: -1, infra: 0, pol: +1, msg: "Legions loyal, you gain influence."},
+      {label: "Promise (400)", cost: 400, riot: 0, unrest: 0, infra: 0, pol: 0, msg: "They wait, grudgingly."},
+      {label: "Ignore (0)", cost: 0, riot: 1, unrest: +1, infra: 0, pol: -1, msg: "Mutiny risk up."}
+    ]
+  },
+  /* ---------- EXTREME problems ---------- */
+  {
+    title: "Gallic Invasion!",
+    desc: "Gaulish tribes raid northern borders. A massive threat.",
+    rarity: "extreme",
+    options: [
+      {label: "Raise Large Army (1200)", cost: 1200, riot: 0, unrest: -2, infra: 0, pol: +1, msg: "You push them back, but big cost."},
+      {label: "Skirmish (600)", cost: 600, riot: 0, unrest: 0, infra: 0, pol: 0, msg: "Stalemate. They might return."},
+      {label: "Ignore (0)", cost: 0, riot: 1, unrest: +2, infra: -1, pol: -1, msg: "They rampage through the countryside!"}
+    ]
+  },
+  {
+    title: "Barbarian Raids in the East",
+    desc: "Eastern provinces report a wave of raids, demanding reinforcements.",
+    rarity: "extreme",
+    options: [
+      {label: "Send Legions (1000)", cost: 1000, riot: 0, unrest: -1, infra: 0, pol: +1, msg: "Frontier secured. People relieved."},
+      {label: "Bribe (500)", cost: 500, riot: 0, unrest: 0, infra: 0, pol: 0, msg: "They leave for now, but might return."},
+      {label: "Ignore (0)", cost: 0, riot: 1, unrest: +2, infra: -1, pol: -1, msg: "Devastation spreads."}
+    ]
+  },
+  {
+    title: "Tiber Floods!",
+    desc: "The Tiber overflows, damaging infrastructure citywide.",
+    rarity: "extreme",
+    options: [
+      {label: "Massive Dike Project (1100)", cost: 1100, riot: 0, unrest: -2, infra: +2, pol: +1, msg: "You save the city, big cost."},
+      {label: "Contain Waters (600)", cost: 600, riot: 0, unrest: 0, infra: +1, pol: 0, msg: "Flood partially controlled."},
+      {label: "Do Nothing (0)", cost: 0, riot: 1, unrest: +2, infra: -2, pol: -1, msg: "Huge devastation, city scorns you."}
+    ]
+  }
+];
+
+/* Weighted picking from the pool, roughly:
+   50% chance common, 35% chance uncommon, 15% chance extreme. 
+   We'll keep track of usedProblems so each problem won't repeat. */
+let usedProblems = [];
+
+function pickProblem() {
+  // Filter each rarity
+  const common = problemsPool.filter(p => p.rarity==="common");
+  const uncommon = problemsPool.filter(p => p.rarity==="uncommon");
+  const extreme = problemsPool.filter(p => p.rarity==="extreme");
+
+  // Weighted pick
+  const roll = Math.random();
+  let pool = null;
+  if (roll < 0.5) pool = common;
+  else if (roll < 0.85) pool = uncommon;
+  else pool = extreme;
+
+  // Remove used problems from this pool
+  let available = pool.filter((p) => !usedProblems.includes(p.title));
+
+  // If none available in that pool, fallback to entire pool minus used
+  if (available.length === 0) {
+    available = problemsPool.filter((p) => !usedProblems.includes(p.title));
+  }
+
+  if (available.length === 0) {
+    // If everything is used, just allow repeats
+    available = pool;
+  }
+
+  // Pick one
+  const chosen = available[Math.floor(Math.random()*available.length)];
+  if (chosen) usedProblems.push(chosen.title);
+
+  return chosen;
+}
+
+/* ==========================================
+   NPC CAMEOS (Historic Figures & Quotes)
+========================================== */
+const cameoNPCs = [
+  {name: "Cicero", quote: `"The welfare of the people is the ultimate law."`},
+  {name: "Seneca", quote: `"Fire tests gold, suffering tests brave men."`},
+  {name: "Caesar", quote: `"Experience is the teacher of all things."`},
+  {name: "Cato the Elder", quote: `"Carthago delenda est! (Carthage must be destroyed!)"`},
+  {name: "Cleopatra", quote: `"I will not be triumphed over."`},
+  {name: "Pliny the Elder", quote: `"Fortune favors the bold."`},
+  {name: "Livy", quote: `"Events of great consequence often spring from trifling circumstances."`},
+  {name: "Vergil", quote: `"Fortunate is he who is able to know the causes of things."`},
+  {name: "Tiberius", quote: `"Let them hate me, so long as they fear me."`},
+  {name: "Caligula", quote: `"Remember that I have the right to do anything to anybody."`},
+  {name: "Spartacus", quote: `"Better to die free than live as a slave."`},
+  {name: "Marcus Aurelius", quote: `"The best revenge is not to be like your enemy."`},
+  {name: "Crassus", quote: `"You can never have too much gold. Or too many enemies."`},
+  {name: "Pompey the Great", quote: `"Stop quoting laws to us. We carry swords."`},
+  {name: "Brutus", quote: `"I love Caesar, but I love Rome more."`},
+  {name: "Sulla", quote: `"No friend ever served me, and no enemy ever wronged me, whom I have not repaid in full."`},
+  {name: "Horace", quote: `"Pulvis et umbra sumus. (We are but dust and shadow.)"`},
+  {name: "Ovid", quote: `"Happy is the man who has broken the chains which hurt the mind, once and for all."`},
+  {name: "Cicero", quote: `"O tempora, o mores! (Oh, the times! Oh, the morals!)"`},
+  {name: "Catullus", quote: `"I hate and I love. Perhaps you ask why? I do not know, but I feel it, and I am tortured."`},
+  {name: "Vitruvius", quote: `"Well building hath three conditions: firmness, commodity, and delight."`},
+  {name: "Aurelius (again)", quote: `"Accept the things to which fate binds you, and love the people with whom fate brings you together."`},
+  {name: "Seneca (again)", quote: `"Religion is regarded by the common people as true, by the wise as false, and by rulers as useful."`},
+  {name: "Plutarch", quote: `"An imbalance between rich and poor is the oldest and most fatal ailment of all republics."`},
+  {name: "Cornelia (Mother of the Gracchi)", quote: `"These are my jewels! (Referring to her assassinated sons.)"`},
+  {name: "Scipio Africanus", quote: `"I am never less at leisure than when at leisure, nor less alone than when alone."`},
+  {name: "Hadrian", quote: `"Empire grows too large; walls may be needed beyond our borders."`},
+  {name: "Pliny the Younger", quote:`"It is better to act too quickly than too late."`}
+];
+function cameoComment() {
+  if (cameoNPCs.length === 0) {
+    console.log("No more historic cameos available.");
+    return;
+  }
+  const index = Math.floor(Math.random() * cameoNPCs.length);
+  const cameo = cameoNPCs[index];
+  cameoNPCs.splice(index, 1);
+  console.log(`Historic cameo: ${cameo.name} says: ${cameo.quote}`);
+}
+
+/* ==========================================
+   RANDOM EVENTS (Positive/Punishing)
+   Some logic checking city scores
+========================================== */
+const randomEvents = [
+  {
+    desc: "Bandit Raids: -200 denarii",
+    effect: () => { treasury -= 200; },
+    cameo: "A merchant complains, 'Highway robbery is rampant!'"
+  },
+  {
+    desc: "New Tax Revenue: +300 denarii",
+    effect: () => { treasury += 300; },
+    cameo: "A tax collector beams, 'Gold flows in from distant provinces.'"
+  },
+  {
+    desc: "Plague Strikes: -400 denarii, +1 unrest",
+    effect: () => { treasury -= 400; unrest++; },
+    cameo: "A physician laments, 'Foul pestilence spreads among the slums!'"
+  },
+  {
+    desc: "Bountiful Harvest: +200 denarii, -1 unrest",
+    effect: () => { treasury += 200; unrest = Math.max(0, unrest-1); },
+    cameo: "A farmer cheers, 'The gods have blessed our fields!'"
+  },
+  {
+    desc: "Political Rival Undermines You: -1 Politics, +1 Unrest",
+    effect: () => { politics--; unrest++; },
+    cameo: "A sneering senator mutters, 'You won't last long here...'"
+  },
+  {
+    desc: "Gladiator Riot: -100 denarii, +1 Riot Token",
+    effect: () => { treasury -= 100; riotTokens++; },
+    cameo: "A frantic guard warns, 'They've broken loose in the streets!'"
+  },
+  {
+    desc: "Minor Earthquake: -1 Infrastructure",
+    effect: () => { infrastructure--; },
+    cameo: "A trembling citizen says, 'Walls cracked, roads buckled... the gods are angry?'"
+  },
+  {
+    desc: "Donation from a Patrician: +400 denarii",
+    effect: () => { treasury += 400; },
+    cameo: "A wealthy noble laughs, 'Use it wisely, dear Senator... or not.'"
+  }
+];
+
+/* Weighted chance to apply synergy based on city scores.
+   E.g., if 'infrastructure' < -2, Tiber Flood or Earthquake more likely. 
+   You can refine or keep it simple.
+*/
+function pickRandomEvent() {
+  // We'll do a 70% chance of an event
+  if (Math.random() < 0.7) {
+    return randomEvents[Math.floor(Math.random() * randomEvents.length)];
+  }
+  return null;
+}
+
+/* ==========================================
+   MAIN ROUND FLOW
+========================================== */
+function runRound() {
+  if (gameOver) return;
+  problemsDoneThisRound = 0;
+  showNextProblem();
+}
+
+function showNextProblem() {
+  if (problemsDoneThisRound >= 3) {
+    // end round
+    endRound();
+    return;
+  }
+  const problem = pickProblem();
+  if (!problem) {
+    // fallback if something breaks
+    delayedLog("No problems found... skipping to endRound.", "log-negative");
+    endRound();
+    return;
+  }
+  renderProblem(problem, () => {
+    problemsDoneThisRound++;
+    year -= YEARS_PER_PROBLEM;
+    updateScoreboard();
+    if (checkGameEnd()) return;
+    // Trigger random event
+    const event = pickRandomEvent();
+    if (event) {
+      // Apply effect
+      delayedLog(`Random Event: ${event.desc}`, event.desc.includes("-") ? "log-negative":"log-positive", () => {
+        event.effect();
+        delayedLog(`NPC cameo: ${event.cameo}`, "log-info", () => {
+          cameoComment();
+          updateScoreboard();
+          if (!checkGameEnd()) {
+            showNextProblem();
+          }
+        });
+      });
+    } else {
+      cameoComment();
+      if (!checkGameEnd()) {
+        showNextProblem();
+      }
+    }
+  });
+}
+
+/* Render a problem, handle choice, then onDone callback */
+function renderProblem(prob, onDone) {
+  problemArea.innerHTML = "";
+
+  const titleEl = document.createElement("h3");
+  titleEl.classList.add("problem-title");
+  titleEl.textContent = `[${prob.rarity.toUpperCase()}] ${prob.title}`;
+
+  const descEl = document.createElement("p");
+  descEl.classList.add("problem-desc");
+  descEl.textContent = prob.desc;
+
+  problemArea.appendChild(titleEl);
+  problemArea.appendChild(descEl);
+
+  prob.options.forEach((opt, i) => {
+    const btn = document.createElement("button");
+    btn.textContent = `${i+1}. ${opt.label}`;
+    btn.addEventListener("click", () => {
+      treasury -= opt.cost;
+      if (opt.riot) riotTokens += opt.riot;
+      unrest += (opt.unrest || 0);
+      infrastructure += (opt.infra || 0);
+      politics += (opt.pol || 0);
+
+      delayedLog(
+        `Problem: ${prob.title}, You chose: ${opt.label} => ${opt.msg}`,
+        opt.cost>0 ? "log-negative":"log-info",
+        onDone
+      );
+      updateScoreboard();
+    });
+    problemArea.appendChild(btn);
+  });
+}
+
+/* ==========================================
+   END ROUND & SUMMARY
+========================================== */
+function endRound() {
+  if (checkGameEnd()) return;
+  gameScreen.classList.add("hidden");
+  roundSummary.classList.remove("hidden");
+
+  summaryRound.textContent = currentRound;
+  let summaryMsg = `Treasury: ${treasury}, Riot Tokens: ${riotTokens}, Unrest: ${unrest}, Infra: ${infrastructure}, Politics: ${politics}. `;
+
+  if (treasury < 500) summaryMsg += "Your coffers are dangerously low! ";
+  else if (treasury > 10000) summaryMsg += "You're swimming in gold! ";
+  if (unrest > 5) summaryMsg += "The streets rumble with discontent. ";
+  if (infrastructure < -2) summaryMsg += "Your city is crumbling. ";
+  if (politics < -3) summaryMsg += "Rivals mock your incompetence. ";
+  if (riotTokens >= 2) summaryMsg += "A mob is forming in back alleys... ";
+
+  if (summaryMsg.trim() === "") summaryMsg = "Rome stands... for now.";
+
+  roundSummaryText.textContent = summaryMsg;
+
+  btnNextRound.onclick = () => {
+    roundSummary.classList.add("hidden");
+    gameScreen.classList.remove("hidden");
+    currentRound++;
+    if (currentRound > totalRounds) {
+      checkGameEnd();
+    } else {
+      roundNumEl.textContent = currentRound;
+      runRound();
+    }
+  };
+}
+
+/* ==========================================
+   GAME OVER
+========================================== */
+function checkGameEnd() {
+  if (treasury < 0) {
+    endGame(false, "Bankruptcy! The city revolts violently.");
+    return true;
+  }
+  if (treasury < 200) {
+    endGame(false, "Treasury <200, riots break out, chaos ensues!");
+    return true;
+  }
+  if (riotTokens >= 3) {
+    endGame(false, "Too many riot tokens—mob storms the Senate!");
+    return true;
+  }
+  if (currentRound > totalRounds && !gameOver) {
+    endGame(true, "You survived all 12 rounds. The Republic stumbles on, but your legacy is sealed...");
+    return true;
+  }
+  return false;
+}
+
+function endGame(survived, msg) {
+  gameOver = true;
+  gameScreen.classList.add("hidden");
+  roundSummary.classList.add("hidden");
+  gameOverScreen.classList.remove("hidden");
+
+  let finalMsg = msg;
+  if (survived) {
+    // Extra success check
+    if (treasury >= 10000) {
+      finalMsg += "\nIncredible wealth. Are you the next Augustus?";
+    } else {
+      finalMsg += "\nRome stands—somehow. Well done, Senator!";
+    }
+  }
+  gameOverText.textContent = finalMsg;
+}
+
+/* ==========================================
+   UPDATE SCOREBOARD & LOG
+========================================== */
+function updateScoreboard() {
+  yearDisplay.textContent = year;
+  treasuryDisplay.textContent = treasury;
+  riotDisplay.textContent = riotTokens;
+  unrestDisplay.textContent = unrest;
+  infraDisplay.textContent = infrastructure;
+  politicsDisplay.textContent = politics;
+}
+
+/* 
+   We do a "delayedLog" to sequentially add messages 
+   so the player can see them appear in order.
+   If there's a callback, we run it after the message is displayed.
+*/
+let logQueue = [];
+let isLogging = false;
+
+function delayedLog(message, cssClass="log-info", callback=null) {
+  logQueue.push({message, cssClass, callback});
+  processLogQueue();
+}
+
+function processLogQueue() {
+  if (isLogging) return;
+  if (logQueue.length === 0) return;
+  isLogging = true;
+
+  const {message, cssClass, callback} = logQueue.shift();
+
+  // Create log entry
+  const entry = document.createElement("div");
+  entry.classList.add("log-entry", cssClass);
+  entry.textContent = "";
+  messageLog.appendChild(entry);
+
+  // Typewriter-ish reveal (speed: 20ms per char)
+  let i = 0;
+  function typeNextChar() {
+    entry.textContent += message[i];
+    i++;
+    if (i < message.length) {
+      setTimeout(typeNextChar, 20);
+    } else {
+      // done typing
+      messageLog.scrollTop = messageLog.scrollHeight;
+      if (callback) callback();
+      isLogging = false;
+      // process next in queue
+      processLogQueue();
+    }
+  }
+  typeNextChar();
+}
+</script>
+</body>
+</html>
