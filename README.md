@@ -10,7 +10,6 @@
 				       <p> The Roman Republic has problems.</p>
 				       <p> <i>Lots of problems.</i></p>
 				       <p> You will make difficult choices.</p>
-				        <p>Can you fix the problems?</p></div>
-	    <p>...or will your choices lead to the <i>fall of the Roman Republic?</i></p>
-    </p>
+				        <p>Can you fix the problems?</p>
+	    				<p>...or will your choices lead to the <i>fall of the Roman Republic?</i></p>
 		</body>
