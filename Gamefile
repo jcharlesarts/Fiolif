@@ -546,7 +546,7 @@ const cameoNPCs = [
   {name: "Cleopatra", quote: `"I will not be triumphed over."`},
   {name: "Pliny the Elder", quote: `"Fortune favors the bold."`},
   {name: "Livy", quote: `"Events of great consequence often spring from trifling circumstances."`},
-  {name: "Vergil", quote: `"Fortunate is he who is able to know the causes of things."`}
+  {name: "Vergil", quote: `"Fortunate is he who is able to know the causes of things."`},
   {name: "Tiberius", quote: `"Let them hate me, so long as they fear me."`},
   {name: "Caligula", quote: `"Remember that I have the right to do anything to anybody."`},
   {name: "Spartacus", quote: `"Better to die free than live as a slave."`},
